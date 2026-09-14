@@ -1,8 +1,18 @@
-# Sri Balaji Cool Drinks & General Store
+# 🥤 Sri Balaji Cool Drinks & General Store
 
-A modern, full-stack, dual-mode (**Retail + Wholesale**) e-commerce and store management platform designed specifically for the operations of **Sri Balaji Cool Drinks & General Store**.
+<p align="center">
+  <img src="https://img.shields.io/badge/status-active-brightgreen" alt="status" />
+  <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-339933?logo=node.js&logoColor=white" alt="node" />
+  <img src="https://img.shields.io/badge/frontend-React%2018%20%2B%20Vite%208-61DAFB?logo=react&logoColor=black" alt="react" />
+  <img src="https://img.shields.io/badge/backend-Express%20%2B%20MongoDB-47A248?logo=mongodb&logoColor=white" alt="mongo" />
+  <img src="https://img.shields.io/badge/license-Proprietary-lightgrey" alt="license" />
+</p>
 
-The platform provides a streamlined customer ordering experience for regular shoppers and bulk wholesale buyers (kirana stores, restaurants, event organizers, catering services), alongside a centralized, real-time administration panel for store owners to manage catalog variants, live stock inventory, orders, customer accounts, and sales reports.
+<p align="center">
+A modern, full-stack, <b>dual-mode (Retail + Wholesale)</b> e-commerce and store management platform built specifically for the day-to-day operations of <b>Sri Balaji Cool Drinks & General Store</b>.
+</p>
+
+The platform gives regular shoppers and bulk wholesale buyers (kirana stores, restaurants, event organizers, catering services) a smooth, mobile-first ordering experience, while giving the store owner a centralized, real-time admin panel to manage catalog variants, live stock, orders, customers, and sales reports — all without paying a single rupee in payment-gateway fees.
 
 ---
 
@@ -28,14 +38,18 @@ The platform provides a streamlined customer ordering experience for regular sho
 14. [Testing & Verification](#testing--verification)
 15. [Production Deployment Guide](#production-deployment-guide)
 16. [Security & Data Integrity](#security--data-integrity)
-17. [Troubleshooting & FAQ](#troubleshooting--faq)
-18. [License](#license)
+17. [Performance & Scalability Notes](#performance--scalability-notes)
+18. [Roadmap](#roadmap)
+19. [Contributing](#contributing)
+20. [Troubleshooting & FAQ](#troubleshooting--faq)
+21. [License](#license)
 
 ---
 
 ## Business Model & System Concept
 
 **Sri Balaji Cool Drinks & General Store** operates as a hybrid local Indian merchant:
+
 - **Retail Customers**: Buy individual cold drinks, water bottles, and packaged snacks in piece quantities (1–10 bottles) for instant consumption or family use.
 - **Wholesale Customers**: Buy bulk cases/crates (e.g., 6, 12, 24, 48, or 50 bottles per case) at discounted tier prices for local functions, celebrations, or resale in neighborhood stores.
 - **No Third-Party Payment Gateway Friction**: Eliminates merchant gateway fees, transaction charges, and payment gateway failures. Customers choose **Cash at Store / Cash on Delivery** or **Manual UPI** (pay directly via QR code or mobile number upon delivery/pickup).
@@ -46,20 +60,22 @@ The platform provides a streamlined customer ordering experience for regular sho
 ## Technology Stack
 
 ### Frontend Client
+
 | Technology | Purpose |
 |---|---|
-| **React 18** | Declarative Component-driven UI library |
+| **React 18** | Declarative component-driven UI library |
 | **Vite 8** | Ultra-fast bundling, HMR, and development tooling |
-| **Tailwind CSS** | Utility-first CSS framework for clean, responsive UI |
+| **Tailwind CSS** | Utility-first CSS framework for a clean, responsive UI |
 | **React Router v6** | Client-side routing with nested layout routes & route guards |
 | **Axios** | HTTP client with automatic JWT bearer token interceptors |
 | **React Context API** | Application state management (`AuthContext`, `CartContext`) |
 | **Lucide React** | Consistent, modern iconography |
-| **Recharts** | Interactive charts for sales analytics and admin dashboard |
-| **Sonner** | Modern toast notification toasts |
+| **Recharts** | Interactive charts for sales analytics and the admin dashboard |
+| **Sonner** | Modern toast notifications |
 | **vite-plugin-pwa** | Progressive Web App support (offline precaching, install banner) |
 
 ### Backend Server
+
 | Technology | Purpose |
 |---|---|
 | **Node.js (v18+ / v20 / v22 / v24)** | Modern ES Modules JavaScript runtime |
@@ -102,6 +118,18 @@ The platform provides a streamlined customer ordering experience for regular sho
 |                                                                                               |
 |   Users        Categories     Products & Variants     Orders       InventoryTx     Settings   |
 +-----------------------------------------------------------------------------------------------+
+```
+
+### Request Lifecycle (example: placing an order)
+
+```
+Client (Cart) → POST /api/orders → protect (JWT) → orderController.createOrder
+   → resolve each item's variant from MongoDB (server-authoritative price/stock)
+   → runWithOptionalTransaction (atomic if replica set, safe fallback otherwise)
+   → deduct stock + write InventoryTransaction ledger entries
+   → persist Order + timeline entry ("PENDING")
+   → notificationService → create in-app notification
+   → respond with { success, data: order }
 ```
 
 ---
@@ -221,23 +249,24 @@ Shop/
 ## Core Features
 
 ### Customer Application
-- **Visual Catalog & Instant Filtering**:
+
+- **Visual Catalog & Instant Filtering**
   - Filter by category (Cool Drinks, Mineral Water, Juices, Dairy Drinks, Energy Drinks, Soda, ORS, Disposables, General Store).
   - Search by product name, brand (Coca-Cola, Tata, Bisleri, Campa, Parle Agro, etc.), or tags.
   - Sort by popularity, price (low to high / high to low), and in-stock status.
-- **Variant Selector**:
+- **Variant Selector**
   - Products contain multiple volume variants (e.g. Sprite: `250 ml`, `750 ml`, `1.25 L`, `2.25 L`).
   - Switching variants updates the price, MRP discount, wholesale case details, and stock badge instantly without reloading.
-- **Delivery Address Manager**:
+- **Delivery Address Manager**
   - Save multiple delivery addresses with contact names, mobile numbers, door/street addresses, landmarks, and pincodes.
   - Mark a default address for 1-click checkout.
-- **Order Tracking & Invoice**:
-  - Visual status timeline: `PENDING` $\rightarrow$ `CONFIRMED` $\rightarrow$ `PACKED` $\rightarrow$ `OUT_FOR_DELIVERY` $\rightarrow$ `DELIVERED`.
+- **Order Tracking & Invoice**
+  - Visual status timeline: `PENDING` → `CONFIRMED` → `PACKED` → `OUT_FOR_DELIVERY` → `DELIVERED`.
   - Itemized breakdown showing unit prices, pack quantities, delivery fee, and net total.
   - Formatted print view suitable for customer receipts.
-- **Progressive Web App (PWA)**:
+- **Progressive Web App (PWA)**
   - Installable directly to the home screen on Android, iOS, tablet, and desktop Chrome.
-  - Fast page navigation cached via service workers.
+  - Fast page navigation cached via service workers, with graceful offline fallbacks.
 
 ---
 
@@ -261,14 +290,15 @@ The application solves the unique challenge of running a store that caters simul
 - Added to cart as: Retail Piece                    - Added to cart as: Wholesale Case
 ```
 
-#### Key Capabilities:
+#### Key Capabilities
+
 1. **No Separate Accounts Required**: Regular customers and wholesale buyers use the same platform. Any customer can purchase bulk cases or individual pieces without artificial account barriers.
 2. **True Mixed Carts**: Customers can browse in Retail mode to add 2 single cold drinks, switch to Wholesale mode to add 1 wholesale case of water bottles, and proceed to a single unified checkout.
-3. **Transparent Cart Line Items**:
+3. **Transparent Cart Line Items**
    - Each item in the cart explicitly indicates whether it was added as a `Wholesale Case`, `Wholesale Piece`, or `Retail Piece`.
    - Case items clearly show the case count and total unit count (e.g., `1 case(s) (24 bottles/case)`).
    - Quantity controls adapt intelligently: clicking `+` on a case item increments by 1 full case (24 units), while clicking `+` on a retail item increments by 1 bottle.
-4. **Independent Stock Deduction**:
+4. **Independent Stock Deduction**
    - Whether an item is purchased as a retail piece or a wholesale case, stock in MongoDB is strictly tracked at the individual piece level. Ordering 2 cases of 24 bottles accurately deducts 48 units from the variant's stock.
 
 ---
@@ -277,32 +307,28 @@ The application solves the unique challenge of running a store that caters simul
 
 Access the admin dashboard by navigating to `/admin/login` using your administrator credentials.
 
-- **Real-Time KPI Dashboard**:
+- **Real-Time KPI Dashboard**
   - Today's Revenue and Lifetime Revenue.
   - Order Count (Total, Pending, Completed).
   - Active Registered Customers.
   - Low-stock and out-of-stock items requiring immediate attention.
-- **Visual Analytics**:
+- **Visual Analytics**
   - Daily sales trend graphs using Recharts.
   - Category-wise revenue distribution.
   - Order volume breakdown (Retail vs Wholesale).
-- **Comprehensive Order Management**:
+- **Comprehensive Order Management**
   - Filter orders by status (`PENDING`, `CONFIRMED`, `PACKED`, `OUT_FOR_DELIVERY`, `DELIVERED`, `CANCELLED`).
   - Filter by order type (`RETAIL` vs `WHOLESALE`).
   - Search by order number (e.g. `SB-2026-000001`), customer name, or phone number.
   - 1-click status transitions with automatic in-app notifications generated for the customer.
-- **Product & Variant Catalog Editor**:
+- **Product & Variant Catalog Editor**
   - Add, edit, or deactivate products and categories.
   - Configure multiple variants per product with individual MRP, Retail Price, Wholesale Price, Wholesale Case Price, Pack Size, and Pack Unit.
   - Assign SKUs, Barcodes, and custom image URLs.
-- **Live Inventory Ledger**:
-  - Real-time stock audit list showing every variant across all products.
-  - Perform quick stock corrections or restocks with mandatory reason logging (`RESTOCK`, `CORRECTION`, `DAMAGE`, `RETURN`).
-  - Complete history ledger tracking previous stock, new stock, date, and the admin user who initiated the change.
-- **Customer Directory**:
+- **Customer Directory**
   - View all registered customers, total orders placed, and lifetime spend.
   - Toggle wholesale verification flags.
-- **Store Operations & Settings**:
+- **Store Operations & Settings**
   - Configure shop name, contact number, WhatsApp number, and address.
   - Set opening and closing hours.
   - Configure delivery fee and free delivery threshold.
@@ -311,12 +337,23 @@ Access the admin dashboard by navigating to `/admin/login` using your administra
 
 ---
 
+### Inventory & Stock Management
+
+- **Live Inventory Ledger**: Real-time stock audit list showing every variant across all products, with color-coded low-stock and out-of-stock badges.
+- **Quick Stock Corrections**: Perform restocks or corrections with mandatory reason logging (`RESTOCK`, `CORRECTION`, `DAMAGE`, `RETURN`).
+- **Immutable Audit Trail**: Every stock movement is written to the `InventoryTransaction` ledger, capturing previous stock, new stock, quantity delta, reference order/memo, and the admin user who made the change — nothing is ever silently overwritten.
+- **Per-Piece Accuracy**: Stock is always tracked in individual units regardless of whether the sale was a retail piece or a wholesale case, keeping the dashboard numbers trustworthy at any zoom level.
+
+---
+
 ## Pricing & Pack Calculation Engine
 
 The platform implements a server-authoritative pricing resolution algorithm in [`server/src/controllers/orderController.js`](file:///c:/Users/manik/OneDrive/Desktop/Shop/server/src/controllers/orderController.js) that eliminates cart errors and prevents manipulation:
 
-### Case Calculation Formula:
+### Case Calculation Formula
+
 When an order item has `sellingUnit === 'CASE'`:
+
 1. **Pack Size (`packSize`)**: Obtained from `variant.wholesalePackSize` (defaults to 1 if not set).
 2. **Case Price (`casePrice`)**:
    $$\text{Case Price} = \text{variant.wholesaleCasePrice} \parallel (\text{variant.wholesalePrice} \times \text{packSize}) \parallel (\text{variant.retailPrice} \times \text{packSize} \times 0.90)$$
@@ -327,14 +364,18 @@ When an order item has `sellingUnit === 'CASE'`:
 5. **Line Item Subtotal**:
    $$\text{Line Subtotal} = \text{Case Price} \times \text{casesOrdered}$$
 
-### Piece Calculation Formula:
+### Piece Calculation Formula
+
 When an item has `sellingUnit === 'PIECE'`:
+
 - **In Wholesale Mode**:
   $$\text{Unit Price} = \text{variant.wholesalePrice} \parallel \left(\frac{\text{variant.wholesaleCasePrice}}{\text{packSize}}\right) \parallel (\text{variant.retailPrice} \times 0.95)$$
 - **In Retail Mode**:
   $$\text{Unit Price} = \text{variant.retailPrice}$$
 - **Line Subtotal**:
   $$\text{Line Subtotal} = \text{Unit Price} \times \text{quantity}$$
+
+> The `∥` (fallback) chain guarantees that even a partially configured variant (e.g. missing `wholesaleCasePrice`) always resolves to a sane, non-zero price rather than failing the checkout.
 
 ---
 
@@ -389,11 +430,14 @@ The preloaded catalog contains 23 products and 46 variants fully configured with
 | **Health** | ORS | Orange | ₹32 | ₹32 | ₹27 | 24 bottles | ₹640 |
 | | ORS | Apple | ₹32 | ₹32 | ₹27 | 24 bottles | ₹640 |
 
+> Run `node src/scripts/update_pricing.js` any time this table changes to sync live MongoDB documents without wiping users, orders, or history.
+
 ---
 
 ## Database Architecture & Data Models
 
 ### 1. `User` Schema
+
 ```javascript
 {
   fullName: { type: String, required: true },
@@ -418,6 +462,7 @@ The preloaded catalog contains 23 products and 46 variants fully configured with
 ```
 
 ### 2. `Product` Schema (with Variants)
+
 ```javascript
 {
   name: { type: String, required: true, trim: true },
@@ -453,6 +498,7 @@ The preloaded catalog contains 23 products and 46 variants fully configured with
 ```
 
 ### 3. `Order` Schema
+
 ```javascript
 {
   orderNumber: { type: String, unique: true }, // e.g. "SB-2026-000004"
@@ -504,6 +550,7 @@ The preloaded catalog contains 23 products and 46 variants fully configured with
 ```
 
 ### 4. `InventoryTransaction` Schema
+
 ```javascript
 {
   productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
@@ -523,6 +570,7 @@ The preloaded catalog contains 23 products and 46 variants fully configured with
 ```
 
 ### 5. `ShopSettings` Schema
+
 ```javascript
 {
   shopName: { type: String, default: 'Sri Balaji Cool Drinks & General Store' },
@@ -541,11 +589,22 @@ The preloaded catalog contains 23 products and 46 variants fully configured with
 }
 ```
 
+### Entity Relationship Summary
+
+```
+User (1) ───< Order (many) ───< Order.items (embedded, references Product/variant)
+Product (1) ───< Product.variants (embedded subdocuments)
+Product/Variant (1) ───< InventoryTransaction (many, immutable ledger)
+User (admin, 1) ───< AuditLog (many)
+ShopSettings — singleton document, cached in-process via settingsService
+```
+
 ---
 
 ## REST API Documentation
 
 All responses conform to the standard payload envelope:
+
 ```json
 // Successful Response
 {
@@ -563,10 +622,11 @@ All responses conform to the standard payload envelope:
 ```
 
 ### 1. Authentication Endpoints (`/api/auth`)
+
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `POST` | `/api/auth/register` | Public | Register customer account (`fullName`, `mobile`, `email`, `password`) |
-| `POST` | `/api/auth/login` | Public | Login via mobile/email and password $\rightarrow$ returns JWT |
+| `POST` | `/api/auth/login` | Public | Login via mobile/email and password → returns JWT |
 | `POST` | `/api/auth/admin/login`| Public | Admin portal authentication (strictly verifies `role: 'admin'`) |
 | `GET` | `/api/auth/me` | Authenticated | Retrieve current user profile and delivery addresses |
 | `PUT` | `/api/auth/profile` | Authenticated | Update user name, email, or mobile |
@@ -575,6 +635,7 @@ All responses conform to the standard payload envelope:
 | `DELETE`| `/api/auth/addresses/:id`| Authenticated| Remove a delivery address |
 
 ### 2. Catalog & Products Endpoints (`/api/products`, `/api/categories`)
+
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `GET` | `/api/categories` | Public | List all active product categories |
@@ -583,6 +644,7 @@ All responses conform to the standard payload envelope:
 | `GET` | `/api/products/featured` | Public | List featured drinks for home showcase |
 
 ### 3. Order Endpoints (`/api/orders`)
+
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `POST` | `/api/orders` | Authenticated | Create a new order (accepts mixed retail & wholesale items) |
@@ -590,7 +652,8 @@ All responses conform to the standard payload envelope:
 | `GET` | `/api/orders/:id` | Authenticated | Get detailed itemized order tracking and timeline |
 | `POST` | `/api/orders/:id/cancel`| Authenticated| Cancel pending order & restore stock |
 
-#### Sample Request Body for Mixed Retail + Wholesale Order:
+#### Sample Request Body for Mixed Retail + Wholesale Order
+
 ```json
 POST /api/orders
 Authorization: Bearer <jwt_token>
@@ -631,6 +694,7 @@ Content-Type: application/json
 ```
 
 ### 4. Admin Management Endpoints (`/api/admin`)
+
 All `/api/admin` routes require an authenticated token where `role === 'admin'`.
 
 | Method | Endpoint | Description |
@@ -638,7 +702,7 @@ All `/api/admin` routes require an authenticated token where `role === 'admin'`.
 | `GET` | `/api/admin/dashboard` | Aggregated metrics: today revenue, pending orders, low stock count |
 | `GET` | `/api/admin/orders` | Paginated admin order browser with status/type filters and search |
 | `GET` | `/api/admin/orders/:id` | Full order inspection view |
-| `PUT` | `/api/admin/orders/:id/status` | Advance status (`PENDING` $\rightarrow$ `CONFIRMED` $\rightarrow$ `PACKED` $\rightarrow$ `OUT_FOR_DELIVERY` $\rightarrow$ `DELIVERED`) |
+| `PUT` | `/api/admin/orders/:id/status` | Advance status (`PENDING` → `CONFIRMED` → `PACKED` → `OUT_FOR_DELIVERY` → `DELIVERED`) |
 | `GET` | `/api/admin/inventory` | Complete list of all variants with current stock and alert badges |
 | `POST` | `/api/admin/inventory/adjust` | Record stock restock or correction with audit reason |
 | `GET` | `/api/admin/inventory/transactions` | Full historical stock ledger |
@@ -650,6 +714,12 @@ All `/api/admin` routes require an authenticated token where `role === 'admin'`.
 | `GET` | `/api/admin/reports/sales` | Sales revenue timeline by date range |
 | `GET` | `/api/admin/settings` | Retrieve store settings and operational toggles |
 | `PUT` | `/api/admin/settings` | Update store settings (delivery fees, store hours, toggles) |
+
+### 5. Health & Utility
+
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/health` | Public | Basic server/DB liveness probe for uptime monitoring |
 
 ---
 
@@ -712,29 +782,36 @@ Create a `.env` file in the `client/` directory:
 VITE_API_URL=http://localhost:5000/api
 ```
 
+> ⚠️ **Never commit real `.env` files.** Both `server/.env` and `client/.env` should be listed in `.gitignore`; only the `.env.example` templates belong in version control.
+
 ---
 
 ## Installation & Setup Guide
 
 ### Prerequisites
+
 - **Node.js**: `v18.0.0` or higher (tested on Node v20 and v24)
 - **Package Manager**: `npm` (v9+)
 - **Database**: Local MongoDB service running on `localhost:27017` **or** a free [MongoDB Atlas Cluster](https://www.mongodb.com/atlas).
 
 ### 1. Clone the Repository
+
 ```bash
 git clone <repository_url>
 cd Shop
 ```
 
 ### 2. Install Dependencies
+
 You can install all dependencies from the root directory with one command:
+
 ```bash
 npm install
 npm run install:all
 ```
 
 Alternatively, install in each package directory separately:
+
 ```bash
 # Install Server dependencies
 cd server
@@ -745,6 +822,17 @@ cd ../client
 npm install
 ```
 
+### 3. Configure Environment Variables
+
+Copy the example files and fill in your own values:
+
+```bash
+cp server/.env.example server/.env
+# then edit server/.env with your MongoDB URI, JWT secret, and admin credentials
+
+echo "VITE_API_URL=http://localhost:5000/api" > client/.env
+```
+
 ---
 
 ## Seeding & Database Utilities
@@ -752,10 +840,12 @@ npm install
 The backend contains dedicated scripts to initialize and maintain data:
 
 ### 1. Seed the Complete Catalog & Admin Account
+
 ```bash
 cd server
 npm run seed
 ```
+
 This script:
 - Clears and rebuilds the 10 core categories.
 - Inserts all **23 products with 46 variants** including volume, unit, retail price, wholesale pack size, and wholesale case pricing.
@@ -763,14 +853,18 @@ This script:
 - Creates the default Administrator account using your `SEED_ADMIN_*` environment variables.
 
 ### 2. Update Pricing Sync Utility
+
 If you want to refresh or sync catalog prices without wiping users or existing orders:
+
 ```bash
 cd server
 node src/scripts/update_pricing.js
 ```
 
 ### 3. Wholesale Setting Sync
+
 To verify or ensure wholesale mode is open to all customers:
+
 ```bash
 cd server
 node src/scripts/setWholesaleSetting.js
@@ -781,15 +875,19 @@ node src/scripts/setWholesaleSetting.js
 ## Running the Application
 
 ### Development Mode (Concurrent)
+
 From the project root:
+
 ```bash
 npm run dev
 ```
+
 This runs both the Express API and Vite React client simultaneously.
 
 ### Development Mode (Separate Terminals)
 
 **Terminal 1 — Backend Express Server:**
+
 ```bash
 cd server
 npm run dev
@@ -797,50 +895,79 @@ npm run dev
 ```
 
 **Terminal 2 — Frontend React Client:**
+
 ```bash
 cd client
 npm run dev
 # Vite runs on http://localhost:5173
 ```
 
-### Accessing the Applications:
+### Accessing the Applications
+
 - **Customer Web Store**: [http://localhost:5173](http://localhost:5173)
 - **Admin Control Center**: [http://localhost:5173/admin/login](http://localhost:5173/admin/login)
 - **Backend Health Check**: [http://localhost:5000/api/health](http://localhost:5000/api/health)
 
-### Default Admin Login Credentials:
+### Default Admin Login Credentials
+
 - **Email**: `admin@sribalaji.store` (or the value of `SEED_ADMIN_EMAIL`)
 - **Password**: `Admin@123456` (or the value of `SEED_ADMIN_PASSWORD`)
+
+> 🔐 Change the default admin password immediately after your first login on any environment beyond local development.
 
 ---
 
 ## Testing & Verification
 
 ### 1. Automated Order & Pricing Resolution Test
+
 To test the dynamic pricing engine and stock deduction without touching the UI:
+
 ```bash
 cd server
 node src/scripts/test_create_order.js
 ```
+
 Expected output:
 - Resolves Retail piece (Sprite 250ml) and Wholesale case (Tata Water 1L).
 - Verifies stock check and accurately reduces inventory.
 - Creates Order `SB-YYYY-XXXXXX`.
 - Restores stock and cleans up test records.
 
-### 2. Frontend Production Build Verification
+### 2. Order Flow Resolution Script
+
+```bash
+cd server
+node src/scripts/test_order_flow.js
+```
+
+Runs the pricing-resolution logic against a range of piece and case combinations to confirm the fallback chains in the Pricing & Pack Calculation Engine behave as documented.
+
+### 3. Frontend Production Build Verification
+
 To ensure all JSX, Tailwind styles, and PWA assets compile cleanly:
+
 ```bash
 cd client
 npm run build
 ```
+
 This outputs production-optimized, minified files into `client/dist/`.
+
+### 4. Manual Smoke-Test Checklist
+
+- [ ] Register a new customer and confirm JWT is issued.
+- [ ] Add a retail item and a wholesale case to the same cart, then checkout.
+- [ ] Confirm stock is deducted correctly on the admin Inventory page.
+- [ ] Advance an order through every status and confirm the customer sees timeline updates.
+- [ ] Restock an item from the admin panel and verify the InventoryTransaction ledger entry.
 
 ---
 
 ## Production Deployment Guide
 
 ### Recommended Cloud Stack
+
 | Component | Provider | Notes |
 |---|---|---|
 | **Frontend** | [Vercel](https://vercel.com) / [Netlify](https://netlify.com) / Cloudflare Pages | Host the static build from `client/dist` |
@@ -848,8 +975,11 @@ This outputs production-optimized, minified files into `client/dist/`.
 | **Database** | [MongoDB Atlas](https://www.mongodb.com/atlas) | M0/M10 Cluster with Replica Set enabled |
 
 ### 1. Frontend (Vercel / Static Host)
+
 When deploying a single-page React app with React Router, configure rewrite rules so all deep links route to `index.html`.
+
 Create `client/vercel.json`:
+
 ```json
 {
   "rewrites": [
@@ -860,12 +990,15 @@ Create `client/vercel.json`:
   ]
 }
 ```
+
 Set the environment variable in Vercel:
+
 ```
 VITE_API_URL=https://your-backend-domain.onrender.com/api
 ```
 
 ### 2. Backend (Render / Railway)
+
 1. Set the root directory to `server/`.
 2. Build command: `npm install`
 3. Start command: `node server.js`
@@ -875,15 +1008,59 @@ VITE_API_URL=https://your-backend-domain.onrender.com/api
    - `JWT_SECRET=<strong_production_secret>`
    - `CLIENT_URL=https://your-frontend-app.vercel.app`
 
+### 3. Post-Deployment Checklist
+
+- [ ] Run `npm run seed` once against the production database (or migrate existing data).
+- [ ] Confirm CORS only allows the deployed `CLIENT_URL`, not `*`.
+- [ ] Verify `/api/health` responds `200` from the public backend URL.
+- [ ] Enable MongoDB Atlas IP allow-listing or VPC peering for the backend host.
+- [ ] Set up uptime monitoring (e.g. UptimeRobot, Better Stack) against `/api/health`.
+- [ ] Rotate `JWT_SECRET` and the seed admin password away from any development values.
+
 ---
 
 ## Security & Data Integrity
 
 1. **Server-Side Price Authority**: Clients cannot submit item prices or subtotals. The backend loads each variant from MongoDB, verifies available stock, evaluates whether piece or case pricing applies, and recalculates line items and totals.
-2. **Double Index & Sanitize**: Protects against NoSQL injection using `express-mongo-sanitize`.
+2. **Sanitized Input**: Protects against NoSQL injection using `express-mongo-sanitize`, plus payload validation middleware on every mutating route.
 3. **Stand-Alone & Replica-Set Resilient**: [`server/src/utils/helpers.js`](file:///c:/Users/manik/OneDrive/Desktop/Shop/server/src/utils/helpers.js) automatically detects whether MongoDB is running as a single-node standalone instance or a replica set, executing atomic transactions when available and safe fallbacks otherwise.
 4. **Idempotency Protection**: Orders accept an `idempotencyKey` parameter from the client to prevent double charges or duplicate orders caused by slow networks or rapid button clicks.
 5. **Secure Authentication**: Passwords hashed with `bcryptjs` using a salt work factor of 12. JWT tokens are verified on all non-public routes.
+6. **Rate Limiting**: `express-rate-limit` throttles authentication and order-placement endpoints to blunt brute-force and scripted abuse.
+7. **Security Headers**: `Helmet` sets sane defaults (CSP, no-sniff, frameguard, etc.) on every response.
+8. **Audit Logging**: Sensitive admin actions (price changes, order status overrides, wholesale approvals) are recorded in `AuditLog` for traceability.
+
+---
+
+## Performance & Scalability Notes
+
+- **Indexed Lookups**: `User.mobile`, `User.email`, `Product.slug`, and `Order.orderNumber` are unique-indexed for fast auth and order lookups.
+- **Cached Settings**: `settingsService` caches the singleton `ShopSettings` document in-process, avoiding a database round-trip on every request that needs delivery fees or store hours.
+- **Pagination Everywhere**: Catalog, order history, and admin list endpoints all accept `page`/`limit` to keep response payloads small as data grows.
+- **PWA Caching**: Static assets and recently viewed catalog pages are precached by the service worker, keeping repeat visits fast even on patchy mobile networks.
+- **Horizontal Scaling Path**: Because pricing and stock checks are fully server-authoritative and stateless per-request (aside from the MongoDB transaction), the Express API can be scaled horizontally behind a load balancer once traffic warrants it.
+
+---
+
+## Roadmap
+
+- [ ] SMS/WhatsApp order status notifications via a provider like Twilio or Gupshup.
+- [ ] Barcode scanning in the admin Inventory page for faster stock corrections.
+- [ ] Customer-facing loyalty points for repeat wholesale buyers.
+- [ ] Exportable CSV/PDF sales reports from the admin Reports page.
+- [ ] Multi-store support (in case additional branches open).
+
+---
+
+## Contributing
+
+This is currently private, single-team software, but the following workflow keeps things consistent if collaborators join:
+
+1. Branch from `main` using `feature/<short-description>` or `fix/<short-description>`.
+2. Keep controllers thin — business logic belongs in `services/`, not inline in route handlers.
+3. Any change to `Product.variants` pricing fields must be reflected in `update_pricing.js` and this README's catalog table.
+4. Run `npm run build` (client) before opening a PR to catch compile-time issues early.
+5. Include before/after screenshots for any UI-affecting change.
 
 ---
 
@@ -900,6 +1077,15 @@ VITE_API_URL=https://your-backend-domain.onrender.com/api
 
 ### Q: "Transaction numbers are only allowed on a replica set member or mongos"
 **A:** Standalone local MongoDB installations do not support multi-document transactions. The helper function `runWithOptionalTransaction` in `server/src/utils/helpers.js` auto-detects this and gracefully falls back to non-transactional execution without throwing errors.
+
+### Q: My admin login keeps failing even with the right email/password.
+**A:** Confirm the account's `role` field is actually `'admin'` — `/api/auth/admin/login` strictly rejects any account where `role !== 'admin'`, even with correct credentials. Re-run `npm run seed` in a clean environment if the admin account was accidentally deleted or demoted.
+
+### Q: Orders are stuck at `PENDING` and stock never deducts.
+**A:** Check the server logs for a MongoDB connection or transaction error. On a standalone (non-replica-set) MongoDB instance, this should already be handled by the fallback in `helpers.js` — if it isn't, confirm your MongoDB version supports the driver version pinned in `server/package.json`.
+
+### Q: How do I reset the demo/seed data without affecting real customer orders?
+**A:** `npm run seed` clears and rebuilds categories, products/variants, and the admin account — it does **not** touch `Order`, `User` (non-admin), or `InventoryTransaction` collections. Use `update_pricing.js` instead if you only need to sync prices.
 
 ---
 
