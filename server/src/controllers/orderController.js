@@ -10,9 +10,9 @@ import { notifyAdmins, notifyUser } from '../services/notificationService.js';
 import { createAuditLog } from '../services/auditService.js';
 import { runWithOptionalTransaction } from '../utils/helpers.js';
 
-const generateOrderNumber = async (session) => {
+const generateOrderNumber = async () => {
   const year = new Date().getFullYear();
-  const seq = await getNextSequence(`order-${year}`, session);
+  const seq = await getNextSequence(`order-${year}`);
   return `SB-${year}-${String(seq).padStart(6, '0')}`;
 };
 
@@ -165,13 +165,19 @@ export const createOrder = asyncHandler(async (req, res) => {
   const order = await runWithOptionalTransaction(async (session) => {
     const orderItems = [];
     let subtotal = 0;
-    const orderNumber = await generateOrderNumber(session);
+    const orderNumber = await generateOrderNumber();
+    const productMap = new Map();
 
     for (const cartItem of items) {
-      const product = session
-        ? await Product.findById(cartItem.productId).session(session)
-        : await Product.findById(cartItem.productId);
-      if (!product) throw new AppError('Product not found', 404);
+      let product = productMap.get(String(cartItem.productId));
+      if (!product) {
+        product = session
+          ? await Product.findById(cartItem.productId).session(session)
+          : await Product.findById(cartItem.productId);
+        if (!product) throw new AppError('Product not found', 404);
+        productMap.set(String(cartItem.productId), product);
+      }
+
       const variant = product.variants.id(cartItem.variantId);
       if (!variant) throw new AppError('Variant not found', 404);
 
@@ -199,7 +205,6 @@ export const createOrder = asyncHandler(async (req, res) => {
       const previousStock = variant.stockQuantity;
       variant.stockQuantity -= priced.quantity;
       product.salesCount = (product.salesCount || 0) + priced.quantity;
-      await product.save(session ? { session } : {});
 
       await InventoryTransaction.create(
         [
@@ -237,6 +242,11 @@ export const createOrder = asyncHandler(async (req, res) => {
         packUnit: priced.packUnit,
       });
       subtotal += priced.lineTotal;
+    }
+
+    // Save each affected product document only once to prevent write conflicts
+    for (const prod of productMap.values()) {
+      await prod.save(session ? { session } : {});
     }
 
     const discount = 0;
@@ -394,16 +404,22 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
 
   if (status === 'CANCELLED' && !['DELIVERED'].includes(previous)) {
     await runWithOptionalTransaction(async (session) => {
+      const productMap = new Map();
       for (const item of order.items) {
-        const product = session
-          ? await Product.findById(item.productId).session(session)
-          : await Product.findById(item.productId);
+        let product = productMap.get(String(item.productId));
+        if (!product) {
+          product = session
+            ? await Product.findById(item.productId).session(session)
+            : await Product.findById(item.productId);
+          if (product) productMap.set(String(item.productId), product);
+        }
         if (!product) continue;
         const variant = product.variants.id(item.variantId);
         if (!variant) continue;
+
         const previousStock = variant.stockQuantity;
         variant.stockQuantity += item.quantity;
-        await product.save(session ? { session } : {});
+
         await InventoryTransaction.create(
           [
             {
@@ -420,6 +436,9 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
           ],
           session ? { session } : {}
         );
+      }
+      for (const prod of productMap.values()) {
+        await prod.save(session ? { session } : {});
       }
       await order.save(session ? { session } : {});
     });
@@ -499,3 +518,4 @@ export const updateAdminNotes = asyncHandler(async (req, res) => {
   await order.save();
   success(res, { order }, 'Admin notes updated');
 });
+// Order controller clean

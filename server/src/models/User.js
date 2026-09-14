@@ -49,8 +49,6 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchema.index({ mobile: 1 });
-userSchema.index({ email: 1 });
 userSchema.index({ role: 1, customerType: 1 });
 userSchema.index({ fullName: 'text', mobile: 'text', email: 'text' });
 

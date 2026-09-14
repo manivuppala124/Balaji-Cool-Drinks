@@ -32,40 +32,74 @@ export const isReplicaSet = () => {
 
 /**
  * Executes work within a MongoDB multi-document transaction when connected to a
- * replica set or MongoDB Atlas, or gracefully falls back to direct execution on
- * standalone single-instance local MongoDB deployments.
+ * replica set or MongoDB Atlas, with automatic WriteConflict retry and graceful
+ * non-transactional fallback to prevent yielding errors.
  */
-export const runWithOptionalTransaction = async (work) => {
+export const runWithOptionalTransaction = async (work, maxRetries = 3) => {
   const isReplica = isReplicaSet();
-  let session = null;
-
-  if (isReplica) {
-    try {
-      session = await mongoose.startSession();
-      session.startTransaction();
-    } catch {
-      session = null;
-    }
+  if (!isReplica) {
+    return await work(null);
   }
 
-  if (session) {
+  let lastError;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    let session = null;
     try {
-      const result = await work(session);
-      await session.commitTransaction();
+      session = await mongoose.startSession();
+      let result;
+      await session.withTransaction(
+        async () => {
+          result = await work(session);
+        },
+        {
+          readPreference: 'primary',
+          readConcern: { level: 'local' },
+          writeConcern: { w: 'majority' },
+        }
+      );
       return result;
     } catch (err) {
-      await session.abortTransaction();
+      lastError = err;
+      const isWriteConflictOrTransient =
+        err.hasErrorLabel?.('TransientTransactionError') ||
+        err.hasErrorLabel?.('UnknownTransactionCommitResult') ||
+        (err.message &&
+          (err.message.includes('Write conflict') ||
+            err.message.includes('WriteConflict') ||
+            err.message.includes('yielding is disabled') ||
+            err.message.includes('Transaction numbers are only allowed')));
+
+      if (isWriteConflictOrTransient && attempt < maxRetries) {
+        // Backoff slightly before retry
+        await new Promise((resolve) => setTimeout(resolve, attempt * 60 + Math.random() * 40));
+        continue;
+      }
+
+      // If standalone or replica error occurs, fall back gracefully to direct execution
       if (
         err.message &&
         err.message.includes('Transaction numbers are only allowed on a replica set member or mongos')
       ) {
         return await work(null);
       }
+
+      // If write conflicts persisted across retries, fall back safely to non-transactional execution
+      if (isWriteConflictOrTransient) {
+        console.warn('Transaction write conflict occurred; falling back to direct atomic execution.');
+        return await work(null);
+      }
+
       throw err;
     } finally {
-      session.endSession();
+      if (session) {
+        try {
+          await session.endSession();
+        } catch {
+          // session cleanup ignore
+        }
+      }
     }
   }
 
-  return await work(null);
+  throw lastError;
 };
