@@ -16,6 +16,7 @@ import adminRoutes from './src/routes/adminRoutes.js';
 import publicRoutes from './src/routes/publicRoutes.js';
 
 const app = express();
+app.set('trust proxy', 1);
 
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 app.use(
