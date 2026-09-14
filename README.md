@@ -759,8 +759,8 @@ CLIENT_URL=http://localhost:5173
 # =================================================================
 # SEED ADMINISTRATOR CREDENTIALS
 # =================================================================
-SEED_ADMIN_EMAIL=admin@sribalaji.store
-SEED_ADMIN_PASSWORD=Admin@123456
+SEED_ADMIN_EMAIL=
+SEED_ADMIN_PASSWORD=
 SEED_ADMIN_NAME=Store Admin
 SEED_ADMIN_MOBILE=9999999999
 
