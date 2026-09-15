@@ -25,6 +25,9 @@ export default function Footer() {
             <Link to="/categories">Categories</Link>
             <Link to="/wholesale">Wholesale</Link>
             <Link to="/orders">Orders</Link>
+            <Link to="/admin/login" className="font-semibold text-accent-400 hover:underline">
+              Admin Login
+            </Link>
           </div>
         </div>
         <div>
@@ -37,8 +40,13 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="border-t border-white/10 py-4 text-center text-xs text-brand-100/60">
-        © {new Date().getFullYear()} {shopName}. All rights reserved.
+      <div className="border-t border-white/10 py-4 text-xs text-brand-100/60">
+        <div className="container-app flex flex-wrap items-center justify-between gap-2 text-center md:text-left">
+          <span>© {new Date().getFullYear()} {shopName}. All rights reserved.</span>
+          <Link to="/admin/login" className="text-brand-100/70 hover:text-white underline">
+            Store Admin Login
+          </Link>
+        </div>
       </div>
     </footer>
   );

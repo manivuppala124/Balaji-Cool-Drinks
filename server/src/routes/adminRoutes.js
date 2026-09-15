@@ -20,6 +20,7 @@ router.get('/dashboard', dashboard.getDashboard);
 router.get('/search', search.adminGlobalSearch);
 
 router.get('/orders', order.getAdminOrders);
+router.post('/orders/in-store', order.createInStoreOrder);
 router.get('/orders/:id', order.getMyOrderById);
 router.put('/orders/:id/status', order.updateOrderStatus);
 router.put('/orders/:id/payment', order.updatePaymentStatus);

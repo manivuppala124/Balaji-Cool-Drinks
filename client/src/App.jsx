@@ -39,6 +39,7 @@ import AdminWholesale from './pages/admin/Wholesale';
 import Reports from './pages/admin/Reports';
 import AdminNotifications from './pages/admin/Notifications';
 import Settings from './pages/admin/Settings';
+import POS from './pages/admin/POS';
 
 export default function App() {
   return (
@@ -143,6 +144,7 @@ export default function App() {
               <Route index element={<Dashboard />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="orders/:id" element={<AdminOrderDetails />} />
+              <Route path="pos" element={<POS />} />
               <Route path="products" element={<AdminProducts />} />
               <Route path="products/new" element={<ProductForm />} />
               <Route path="products/:id/edit" element={<ProductForm />} />

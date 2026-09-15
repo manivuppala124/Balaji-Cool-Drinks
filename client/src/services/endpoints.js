@@ -57,6 +57,7 @@ export const adminApi = {
   dashboard: () => api.get('/admin/dashboard'),
   search: (q) => api.get('/admin/search', { params: { q } }),
   orders: (params) => api.get('/admin/orders', { params }),
+  createInStoreOrder: (data) => api.post('/admin/orders/in-store', data),
   order: (id) => api.get(`/admin/orders/${id}`),
   updateOrderStatus: (id, data) => api.put(`/admin/orders/${id}/status`, data),
   updatePayment: (id, data) => api.put(`/admin/orders/${id}/payment`, data),

@@ -18,9 +18,11 @@ export const ORDER_STATUS_FLOW = {
   CANCELLED: [],
 };
 
-export const PAYMENT_METHODS = ['CASH', 'UPI'];
+export const PAYMENT_METHODS = ['CASH', 'UPI', 'PHONEPE', 'SPLIT'];
 export const PAYMENT_STATUSES = ['PENDING', 'PAID', 'FAILED', 'NOT_APPLICABLE'];
 export const ORDER_TYPES = ['RETAIL', 'WHOLESALE'];
+export const ORDER_SOURCES = ['ONLINE', 'IN_STORE'];
+export const SPLIT_PAYMENT_METHODS = ['CASH', 'UPI', 'PHONEPE', 'GOOGLE_PAY', 'PAYTM', 'CARD'];
 
 export const INVENTORY_TYPES = [
   'PURCHASE',

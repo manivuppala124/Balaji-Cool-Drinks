@@ -4,7 +4,18 @@ import {
   PAYMENT_METHODS,
   PAYMENT_STATUSES,
   ORDER_TYPES,
+  ORDER_SOURCES,
+  SPLIT_PAYMENT_METHODS,
 } from '../config/constants.js';
+
+const paymentSplitItemSchema = new mongoose.Schema(
+  {
+    method: { type: String, enum: SPLIT_PAYMENT_METHODS, required: true },
+    amount: { type: Number, required: true, min: 0 },
+    reference: { type: String, default: '' },
+  },
+  { _id: false }
+);
 
 const orderItemSchema = new mongoose.Schema(
   {
@@ -64,11 +75,17 @@ const orderSchema = new mongoose.Schema(
     },
     items: { type: [orderItemSchema], required: true },
     orderType: { type: String, enum: ORDER_TYPES, default: 'RETAIL', index: true },
+    orderSource: { type: String, enum: ORDER_SOURCES, default: 'ONLINE', index: true },
+    inStoreCustomer: {
+      fullName: { type: String, default: '' },
+      mobile: { type: String, default: '' },
+    },
     subtotal: { type: Number, required: true, min: 0 },
     discount: { type: Number, default: 0, min: 0 },
     deliveryCharge: { type: Number, default: 0, min: 0 },
     totalAmount: { type: Number, required: true, min: 0 },
     paymentMethod: { type: String, enum: PAYMENT_METHODS, required: true },
+    paymentSplit: { type: [paymentSplitItemSchema], default: [] },
     paymentStatus: {
       type: String,
       enum: PAYMENT_STATUSES,
@@ -81,7 +98,7 @@ const orderSchema = new mongoose.Schema(
       default: 'PENDING',
       index: true,
     },
-    deliveryAddress: { type: deliveryAddressSchema, required: true },
+    deliveryAddress: { type: deliveryAddressSchema, default: () => ({}) },
     customerNotes: { type: String, default: '' },
     adminNotes: { type: String, default: '' },
     cancellationReason: { type: String, default: '' },
@@ -92,6 +109,7 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.index({ createdAt: -1 });
+orderSchema.index({ orderSource: 1, createdAt: -1 });
 orderSchema.index({ customerId: 1, createdAt: -1 });
 orderSchema.index({ orderStatus: 1, paymentStatus: 1 });
 

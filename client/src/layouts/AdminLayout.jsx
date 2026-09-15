@@ -15,6 +15,7 @@ import {
   LogOut,
   MoreHorizontal,
   X,
+  Store,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +25,7 @@ import { cn, formatINR } from '../utils/format';
 const NAV = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { to: '/admin/pos', label: 'POS / Billing', icon: Store },
   { to: '/admin/products', label: 'Products', icon: Package },
   { to: '/admin/categories', label: 'Categories', icon: Tags },
   { to: '/admin/inventory', label: 'Inventory', icon: Warehouse },
@@ -36,6 +38,7 @@ const NAV = [
 
 const MOBILE_PRIMARY = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/admin/pos', label: 'POS', icon: Store },
   { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { to: '/admin/products', label: 'Products', icon: Package },
 ];

@@ -153,9 +153,14 @@ export default function OrderDetails() {
             <div className="text-right text-sm">
               <p className="font-semibold">Invoice / Order</p>
               <p>{order.orderNumber}</p>
-              <p className="mt-2">
+              <div className="mt-2 flex items-center justify-end gap-1.5 flex-wrap">
+                {order.orderSource === 'IN_STORE' && (
+                  <span className="badge bg-emerald-100 text-emerald-800 font-bold">
+                    IN-STORE POS
+                  </span>
+                )}
                 <span className={cn('badge', statusTone(order.orderStatus))}>{order.orderStatus}</span>
-              </p>
+              </div>
             </div>
           </div>
 
@@ -220,25 +225,65 @@ export default function OrderDetails() {
 
           <div className="space-y-4">
             <div className="card-soft p-4 text-sm">
-              <h3 className="font-display font-700">Customer / Delivery</h3>
-              <p className="mt-2 font-semibold">{addr.fullName || '—'}</p>
-              <p className="text-muted">{addr.mobile}</p>
-              <p className="mt-2">
-                {addr.addressLine}
-                {addr.area ? `, ${addr.area}` : ''}
-              </p>
-              <p>
-                {[addr.landmark, addr.city, addr.state, addr.pincode].filter(Boolean).join(', ')}
-              </p>
-              <p className="mt-3">
-                Type: <strong>{order.orderType}</strong>
-              </p>
-              <p>
-                Payment: <strong>{order.paymentMethod}</strong>{' '}
-                <span className={cn('badge', statusTone(order.paymentStatus))}>
-                  {order.paymentStatus}
-                </span>
-              </p>
+              {order.orderSource === 'IN_STORE' ? (
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-display font-700">Customer Details</h3>
+                    <span className="badge bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                      Counter Pickup
+                    </span>
+                  </div>
+                  <p className="mt-2 font-semibold text-brand-950">
+                    {order.inStoreCustomer?.fullName || 'Walk-in Customer'}
+                  </p>
+                  <p className="text-muted">{order.inStoreCustomer?.mobile || 'No mobile provided'}</p>
+                  <p className="mt-2 text-xs text-muted">
+                    Source: <strong className="text-brand-900">In-Store Direct Sale</strong>
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <h3 className="font-display font-700">Customer / Delivery</h3>
+                  <p className="mt-2 font-semibold">{addr.fullName || '—'}</p>
+                  <p className="text-muted">{addr.mobile}</p>
+                  <p className="mt-2">
+                    {addr.addressLine}
+                    {addr.area ? `, ${addr.area}` : ''}
+                  </p>
+                  <p>
+                    {[addr.landmark, addr.city, addr.state, addr.pincode].filter(Boolean).join(', ')}
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-3 border-t border-brand-50 pt-2 space-y-1">
+                <p>
+                  Order Type: <strong>{order.orderType}</strong>
+                </p>
+                <p>
+                  Payment: <strong>{order.paymentMethod}</strong>{' '}
+                  <span className={cn('badge', statusTone(order.paymentStatus))}>
+                    {order.paymentStatus}
+                  </span>
+                </p>
+                {order.paymentSplit?.length > 0 && (
+                  <div className="mt-2 rounded-xl bg-brand-50/70 p-2.5 border border-brand-100 text-xs">
+                    <p className="font-bold text-brand-900 mb-1">Payment Split Breakdown:</p>
+                    <div className="space-y-1">
+                      {order.paymentSplit.map((split, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-slate-700">
+                          <span>
+                            <strong className="text-brand-800">{split.method}</strong>
+                            {split.reference ? ` (${split.reference})` : ''}:
+                          </span>
+                          <span className="font-bold">{formatINR(split.amount)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {order.customerNotes ? (
                 <p className="mt-3 rounded-xl bg-brand-50 p-3 text-xs">
                   Customer note: {order.customerNotes}

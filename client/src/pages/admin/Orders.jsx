@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Filter, RefreshCw } from 'lucide-react';
+import { Filter, RefreshCw, Store } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminApi } from '../../services/endpoints';
 import { formatINR, statusTone, cn } from '../../utils/format';
@@ -19,6 +19,7 @@ const STATUS_OPTIONS = [
 
 const emptyFilters = {
   orderNumber: '',
+  orderSource: '',
   orderStatus: '',
   paymentStatus: '',
   paymentMethod: '',
@@ -68,9 +69,14 @@ export default function Orders() {
           <h1 className="font-display text-2xl font-800">Orders</h1>
           <p className="text-sm text-muted">{data.pagination?.total || 0} total</p>
         </div>
-        <button type="button" className="btn btn-secondary text-sm" onClick={load}>
-          <RefreshCw size={16} /> Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <Link to="/admin/pos" className="btn btn-primary text-sm flex items-center gap-1.5">
+            <Store size={16} /> New In-Store (POS) Order
+          </Link>
+          <button type="button" className="btn btn-secondary text-sm" onClick={load}>
+            <RefreshCw size={16} /> Refresh
+          </button>
+        </div>
       </div>
 
       <form onSubmit={applyFilters} className="card-soft grid gap-3 p-4 md:grid-cols-4 lg:grid-cols-6">
@@ -104,12 +110,23 @@ export default function Orders() {
         </select>
         <select
           className="input"
+          value={filters.orderSource}
+          onChange={(e) => setFilters((f) => ({ ...f, orderSource: e.target.value }))}
+        >
+          <option value="">All sources</option>
+          <option value="ONLINE">Online Orders</option>
+          <option value="IN_STORE">In-Store (POS)</option>
+        </select>
+        <select
+          className="input"
           value={filters.paymentMethod}
           onChange={(e) => setFilters((f) => ({ ...f, paymentMethod: e.target.value }))}
         >
           <option value="">All methods</option>
           <option value="CASH">CASH</option>
+          <option value="PHONEPE">PHONEPE</option>
           <option value="UPI">UPI</option>
+          <option value="SPLIT">SPLIT</option>
         </select>
         <select
           className="input"
@@ -191,21 +208,61 @@ export default function Orders() {
                     <td className="px-4 py-3">
                       <Link
                         to={`/admin/orders/${o._id}`}
-                        className="font-semibold text-brand-800 hover:underline"
+                        className="font-semibold text-brand-800 hover:underline flex items-center gap-1.5"
                       >
                         {o.orderNumber}
                       </Link>
+                      {o.orderSource === 'IN_STORE' ? (
+                        <span className="inline-block mt-0.5 rounded bg-emerald-100 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                          In-Store
+                        </span>
+                      ) : (
+                        <span className="inline-block mt-0.5 rounded bg-sky-50 px-1.5 py-0.2 text-[10px] font-medium uppercase tracking-wider text-sky-700">
+                          Online
+                        </span>
+                      )}
                     </td>
-                    <td className="px-4 py-3 text-muted">
+                    <td className="px-4 py-3 text-muted text-xs">
                       {o.createdAt ? new Date(o.createdAt).toLocaleString('en-IN') : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      {o.customerId?.fullName || '—'}
-                      <span className="block text-xs text-muted">{o.customerId?.mobile}</span>
+                      {o.orderSource === 'IN_STORE' ? (
+                        <>
+                          <span className="font-semibold text-brand-950">
+                            {o.inStoreCustomer?.fullName || 'Walk-in Customer'}
+                          </span>
+                          {o.inStoreCustomer?.mobile ? (
+                            <span className="block text-xs text-muted">{o.inStoreCustomer.mobile}</span>
+                          ) : (
+                            <span className="block text-[11px] text-muted italic">Counter walk-in</span>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-medium">{o.customerId?.fullName || '—'}</span>
+                          <span className="block text-xs text-muted">{o.customerId?.mobile}</span>
+                        </>
+                      )}
                     </td>
-                    <td className="px-4 py-3">{o.orderType}</td>
                     <td className="px-4 py-3">
-                      <span className="block">{o.paymentMethod}</span>
+                      <span className="font-medium">{o.orderType}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-semibold">{o.paymentMethod}</span>
+                        {o.paymentMethod === 'SPLIT' && o.paymentSplit?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {o.paymentSplit.map((s, idx) => (
+                              <span
+                                key={idx}
+                                className="rounded bg-slate-100 px-1 py-0.5 text-[10px] text-slate-700 font-medium"
+                              >
+                                {s.method}: ₹{s.amount}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       <span className={cn('badge mt-1', statusTone(o.paymentStatus))}>
                         {o.paymentStatus}
                       </span>

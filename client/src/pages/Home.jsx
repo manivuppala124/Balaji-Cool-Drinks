@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Droplets, Sparkles, Tag, Truck } from 'lucide-react';
+import { ArrowRight, Droplets, Sparkles, Tag, Truck, ShieldCheck } from 'lucide-react';
 import { categoryApi, productApi } from '../services/endpoints';
 import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ProductCard';
@@ -145,6 +145,13 @@ export default function Home() {
         }} />
         <div className="container-app relative grid min-h-[72vh] items-center py-16 md:py-20">
           <div className="max-w-2xl text-white animate-fade-up">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-xs">
+              <span>Store Management</span>
+              <span className="opacity-40">|</span>
+              <Link to="/admin/login" className="flex items-center gap-1 text-accent-300 hover:text-white underline">
+                <ShieldCheck size={14} /> Admin Login <ArrowRight size={12} />
+              </Link>
+            </div>
             <p className="font-display text-4xl font-800 leading-tight md:text-6xl md:leading-[1.05]">
               {shopName}
             </p>
@@ -160,6 +167,12 @@ export default function Home() {
               </Link>
               <Link to="/wholesale" className="btn btn-secondary border-white/30 bg-white/10 text-white">
                 Wholesale deals
+              </Link>
+              <Link
+                to="/admin/login"
+                className="btn btn-secondary border-white/30 bg-white/10 text-white hover:bg-white/20"
+              >
+                <ShieldCheck size={16} /> Admin Login
               </Link>
             </div>
           </div>

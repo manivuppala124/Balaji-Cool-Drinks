@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   MessageCircle,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -131,6 +132,12 @@ export default function CustomerShell({ children }) {
             <NavLink to="/categories">Categories</NavLink>
             <NavLink to="/products">Shop</NavLink>
             <NavLink to="/wholesale">Wholesale</NavLink>
+            <NavLink
+              to="/admin/login"
+              className="flex items-center gap-1 rounded-lg border border-brand-200 bg-brand-50/80 px-2.5 py-1 text-xs font-bold text-brand-800 transition hover:bg-brand-100"
+            >
+              <ShieldCheck size={14} /> Admin
+            </NavLink>
           </nav>
 
           <Link to="/cart" className="relative rounded-xl bg-brand-50 p-2.5 text-brand-800">
@@ -177,6 +184,13 @@ export default function CustomerShell({ children }) {
               <Link to="/products" onClick={() => setMenuOpen(false)}>Shop</Link>
               <Link to="/wholesale" onClick={() => setMenuOpen(false)}>Wholesale</Link>
               <Link to="/orders" onClick={() => setMenuOpen(false)}>My Orders</Link>
+              <Link
+                to="/admin/login"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-1.5 font-bold text-brand-800"
+              >
+                <ShieldCheck size={16} /> Admin Login
+              </Link>
               {user ? (
                 <button
                   type="button"

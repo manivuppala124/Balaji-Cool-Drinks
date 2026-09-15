@@ -33,6 +33,7 @@ export const resolveItemPricing = (
   if (orderType === 'WHOLESALE') {
     if (settings?.requireWholesaleApproval) {
       const eligible =
+        user?.role === 'admin' ||
         user?.wholesaleCustomer ||
         user?.customerType === 'WHOLESALE' ||
         user?.wholesaleApproved;
@@ -317,6 +318,225 @@ export const createOrder = asyncHandler(async (req, res) => {
   success(res, { order }, 'Order placed successfully', 201);
 });
 
+export const createInStoreOrder = asyncHandler(async (req, res) => {
+  const {
+    items = [],
+    orderType = 'RETAIL',
+    customerName = '',
+    customerMobile = '',
+    customerId = null,
+    discount = 0,
+    paymentMethod = 'CASH',
+    paymentSplit = [],
+    adminNotes = '',
+  } = req.body;
+
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new AppError('Order must contain at least one item', 400);
+  }
+
+  const validMethods = ['CASH', 'UPI', 'PHONEPE', 'SPLIT'];
+  if (!validMethods.includes(paymentMethod)) {
+    throw new AppError(`Invalid payment method: ${paymentMethod}`, 400);
+  }
+
+  const settings = await getShopSettings();
+
+  const order = await runWithOptionalTransaction(async (session) => {
+    const orderItems = [];
+    let subtotal = 0;
+    const orderNumber = await generateOrderNumber();
+    const productMap = new Map();
+
+    for (const cartItem of items) {
+      let product = productMap.get(String(cartItem.productId));
+      if (!product) {
+        product = session
+          ? await Product.findById(cartItem.productId).session(session)
+          : await Product.findById(cartItem.productId);
+        if (!product) throw new AppError(`Product not found: ${cartItem.productId}`, 404);
+        productMap.set(String(cartItem.productId), product);
+      }
+
+      const variant = product.variants.id(cartItem.variantId);
+      if (!variant) throw new AppError(`Variant not found: ${cartItem.variantId}`, 404);
+
+      const itemOrderType =
+        cartItem.orderMode ||
+        (cartItem.sellingUnit === 'CASE' ? 'WHOLESALE' : orderType);
+
+      const priced = resolveItemPricing(
+        product,
+        variant,
+        req.user,
+        itemOrderType,
+        cartItem.sellingUnit || 'PIECE',
+        cartItem.sellingUnit === 'CASE' ? cartItem.casesOrdered || cartItem.quantity : cartItem.quantity,
+        settings
+      );
+
+      if (variant.stockQuantity < priced.quantity) {
+        throw new AppError(
+          `Insufficient stock for ${product.name} (${variant.name}). Available: ${variant.stockQuantity}, Requested: ${priced.quantity}`,
+          400
+        );
+      }
+
+      const previousStock = variant.stockQuantity;
+      variant.stockQuantity -= priced.quantity;
+      product.salesCount = (product.salesCount || 0) + priced.quantity;
+
+      await InventoryTransaction.create(
+        [
+          {
+            productId: product._id,
+            variantId: variant._id,
+            type: 'SALE',
+            quantity: -priced.quantity,
+            previousStock,
+            newStock: variant.stockQuantity,
+            referenceId: orderNumber,
+            createdBy: req.user._id,
+            notes: 'In-store POS counter sale',
+          },
+        ],
+        session ? { session } : {}
+      );
+
+      orderItems.push({
+        productId: product._id,
+        variantId: variant._id,
+        productName: product.name,
+        brand: product.brand,
+        variantName: variant.name,
+        sku: variant.sku || '',
+        barcode: variant.barcode || '',
+        image: product.images?.[0] || '',
+        quantity: priced.quantity,
+        unitPrice: priced.unitPrice,
+        mrp: variant.mrp,
+        subtotal: priced.lineTotal,
+        orderMode: itemOrderType,
+        sellingUnit: priced.sellingUnit,
+        casesOrdered: priced.casesOrdered,
+        packSize: priced.packSize,
+        packUnit: priced.packUnit,
+      });
+      subtotal += priced.lineTotal;
+    }
+
+    for (const prod of productMap.values()) {
+      await prod.save(session ? { session } : {});
+    }
+
+    const discountAmount = Math.max(0, Number(discount) || 0);
+    const totalAmount = Math.max(0, Number((subtotal - discountAmount).toFixed(2)));
+
+    let finalizedSplit = [];
+    if (paymentMethod === 'SPLIT') {
+      if (!Array.isArray(paymentSplit) || paymentSplit.length === 0) {
+        throw new AppError('Split payment details are required', 400);
+      }
+      let splitTotal = 0;
+      for (const split of paymentSplit) {
+        const amt = Number(split.amount);
+        if (isNaN(amt) || amt <= 0) {
+          throw new AppError(`Invalid split amount: ${split.amount}`, 400);
+        }
+        splitTotal += amt;
+        finalizedSplit.push({
+          method: split.method,
+          amount: Number(amt.toFixed(2)),
+          reference: split.reference || '',
+        });
+      }
+
+      if (Math.abs(splitTotal - totalAmount) > 0.5 && splitTotal < totalAmount) {
+        throw new AppError(
+          `Split payment sum (₹${splitTotal.toFixed(2)}) does not match order total (₹${totalAmount.toFixed(2)})`,
+          400
+        );
+      }
+    } else {
+      finalizedSplit = [
+        {
+          method: paymentMethod,
+          amount: totalAmount,
+          reference: req.body.paymentReference || '',
+        },
+      ];
+    }
+
+    const finalOrderType = orderItems.some(
+      (i) => i.orderMode === 'WHOLESALE' || i.sellingUnit === 'CASE'
+    )
+      ? 'WHOLESALE'
+      : orderType;
+
+    const assignedCustomerId = customerId || req.user._id;
+
+    const [createdOrder] = await Order.create(
+      [
+        {
+          orderNumber,
+          customerId: assignedCustomerId,
+          items: orderItems,
+          orderType: finalOrderType,
+          orderSource: 'IN_STORE',
+          inStoreCustomer: {
+            fullName: customerName.trim() || 'Walk-in Customer',
+            mobile: customerMobile.trim() || '',
+          },
+          subtotal,
+          discount: discountAmount,
+          deliveryCharge: 0,
+          totalAmount,
+          paymentMethod,
+          paymentSplit: finalizedSplit,
+          paymentStatus: 'PAID',
+          orderStatus: 'DELIVERED',
+          deliveryAddress: {
+            fullName: customerName.trim() || 'Walk-in Customer',
+            mobile: customerMobile.trim() || '',
+            addressLine: 'In-Store Counter Pickup',
+            city: settings?.shopAddress || 'In-Store',
+            state: 'AP',
+            pincode: '',
+          },
+          adminNotes: adminNotes.trim(),
+          statusHistory: [
+            {
+              status: 'DELIVERED',
+              note: 'In-store counter order completed and paid',
+              changedBy: req.user._id,
+              at: new Date(),
+            },
+          ],
+        },
+      ],
+      session ? { session } : {}
+    );
+
+    return createdOrder;
+  });
+
+  await createAuditLog({
+    adminId: req.user._id,
+    action: 'CREATE_IN_STORE_ORDER',
+    entity: 'Order',
+    entityId: order._id,
+    newValue: {
+      orderNumber: order.orderNumber,
+      totalAmount: order.totalAmount,
+      paymentMethod: order.paymentMethod,
+      paymentSplit: order.paymentSplit,
+    },
+    ip: req.ip,
+  });
+
+  success(res, { order }, 'In-store order created successfully', 201);
+});
+
 export const getMyOrders = asyncHandler(async (req, res) => {
   const page = Math.max(1, Number(req.query.page) || 1);
   const limit = Math.min(50, Number(req.query.limit) || 10);
@@ -347,6 +567,7 @@ export const getAdminOrders = asyncHandler(async (req, res) => {
 
   if (req.query.orderNumber) filter.orderNumber = new RegExp(req.query.orderNumber, 'i');
   if (req.query.customerId) filter.customerId = req.query.customerId;
+  if (req.query.orderSource) filter.orderSource = req.query.orderSource;
   if (req.query.paymentMethod) filter.paymentMethod = req.query.paymentMethod;
   if (req.query.paymentStatus) filter.paymentStatus = req.query.paymentStatus;
   if (req.query.orderStatus) filter.orderStatus = req.query.orderStatus;
