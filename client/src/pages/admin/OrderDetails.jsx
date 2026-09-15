@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Printer, Save } from 'lucide-react';
+import { ArrowLeft, Printer, Save, MessageCircle, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminApi } from '../../services/endpoints';
 import { useAuth } from '../../context/AuthContext';
 import { formatINR, statusTone, cn, ORDER_STEPS } from '../../utils/format';
+import { sendWhatsAppBillWithPdf, downloadInvoicePdf } from '../../utils/whatsappBill';
 import EmptyState from '../../components/EmptyState';
 
 const NEXT_LABELS = {
@@ -135,9 +136,27 @@ export default function OrderDetails() {
             </p>
           </div>
         </div>
-        <button type="button" className="btn btn-secondary text-sm" onClick={() => window.print()}>
-          <Printer size={16} /> Print invoice
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="btn bg-[#25D366] text-white hover:bg-[#20bd5a] text-sm flex items-center gap-1.5 font-bold shadow-xs"
+            onClick={() => sendWhatsAppBillWithPdf(order, settings)}
+            title="Send bill and PDF invoice to customer via WhatsApp"
+          >
+            <MessageCircle size={16} /> WhatsApp Bill (PDF + Text)
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary text-sm flex items-center gap-1.5"
+            onClick={() => downloadInvoicePdf(order, settings)}
+            title="Download PDF invoice"
+          >
+            <Download size={16} /> PDF Invoice
+          </button>
+          <button type="button" className="btn btn-secondary text-sm" onClick={() => window.print()}>
+            <Printer size={16} /> Print invoice
+          </button>
+        </div>
       </div>
 
       <div className="print-area space-y-5">

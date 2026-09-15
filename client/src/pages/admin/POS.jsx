@@ -18,11 +18,14 @@ import {
   Store,
   Layers,
   Percent,
+  MessageCircle,
+  Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminApi, categoryApi, productApi } from '../../services/endpoints';
 import { useAuth } from '../../context/AuthContext';
 import { formatINR, cn, getStockLabel } from '../../utils/format';
+import { sendWhatsAppBillWithPdf, downloadInvoicePdf } from '../../utils/whatsappBill';
 
 const PAYMENT_MODES = [
   { id: 'CASH', label: 'Cash' },
@@ -61,6 +64,7 @@ export default function POS() {
   // Submission & Receipt State
   const [submitting, setSubmitting] = useState(false);
   const [completedOrder, setCompletedOrder] = useState(null);
+  const [receiptMobile, setReceiptMobile] = useState('');
 
   // Load catalog on mount
   useEffect(() => {
@@ -366,6 +370,7 @@ export default function POS() {
 
       // Open receipt modal
       setCompletedOrder(created);
+      setReceiptMobile(created.inStoreCustomer?.mobile || customerMobile || '');
 
       // Refresh products stock in background
       productApi.list({ limit: 100, isActive: 'true' }).then((r) => {
@@ -380,6 +385,7 @@ export default function POS() {
 
   const handleStartNewOrder = () => {
     setCompletedOrder(null);
+    setReceiptMobile('');
     setCart([]);
     setCustomerName('Walk-in Customer');
     setCustomerMobile('');
@@ -1050,19 +1056,54 @@ export default function POS() {
               </div>
             </div>
 
+            {/* WhatsApp Bill Box */}
+            <div className="no-print mt-4 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-left">
+              <label className="block text-[11px] font-bold text-emerald-900 mb-1">
+                WhatsApp Bill to Customer (PDF + Text):
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  placeholder="Enter 10-digit mobile number"
+                  value={receiptMobile}
+                  onChange={(e) => setReceiptMobile(e.target.value)}
+                  className="input py-1.5 text-xs bg-white flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => sendWhatsAppBillWithPdf(completedOrder, settings, receiptMobile)}
+                  className="btn bg-[#25D366] text-white hover:bg-[#20bd5a] py-1.5 px-3 text-xs font-bold flex items-center gap-1.5 shadow-sm"
+                  title="Send formatted bill and PDF invoice via WhatsApp"
+                >
+                  <MessageCircle size={15} /> WhatsApp Bill
+                </button>
+              </div>
+              <p className="mt-1 text-[10px] text-emerald-700">
+                Sends complete itemized bill text &amp; official PDF invoice to the customer's WhatsApp.
+              </p>
+            </div>
+
             {/* Modal Actions */}
-            <div className="no-print mt-6 flex gap-2">
+            <div className="no-print mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => downloadInvoicePdf(completedOrder, settings)}
+                className="btn btn-secondary flex-1 py-2 text-xs font-semibold"
+                title="Download official PDF invoice"
+              >
+                <Download size={15} /> Download PDF
+              </button>
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="btn btn-primary flex-1 py-2 text-sm"
+                className="btn btn-primary flex-1 py-2 text-xs font-semibold"
               >
-                <Printer size={16} /> Print Receipt
+                <Printer size={15} /> Print Receipt
               </button>
               <button
                 type="button"
                 onClick={handleStartNewOrder}
-                className="btn btn-secondary flex-1 py-2 text-sm"
+                className="btn btn-secondary flex-1 py-2 text-xs font-semibold"
               >
                 New Sale
               </button>

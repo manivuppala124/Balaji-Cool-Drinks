@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Printer } from 'lucide-react';
+import { Printer, MessageCircle, Download } from 'lucide-react';
 import { orderApi } from '../services/endpoints';
 import { useAuth } from '../context/AuthContext';
 import { formatINR, statusTone } from '../utils/format';
+import { sendWhatsAppBillWithPdf, downloadInvoicePdf } from '../utils/whatsappBill';
 
 export default function OrderSuccess() {
   const { id } = useParams();
@@ -27,11 +28,25 @@ export default function OrderSuccess() {
 
   return (
     <div className="container-app py-8 animate-fade-up">
-      <div className="mb-4 flex flex-wrap gap-2 no-print">
-        <button type="button" className="btn btn-secondary" onClick={() => window.print()}>
+      <div className="mb-4 flex flex-wrap items-center gap-2 no-print">
+        <button
+          type="button"
+          className="btn bg-[#25D366] text-white hover:bg-[#20bd5a] flex items-center gap-1.5 font-bold shadow-xs text-sm"
+          onClick={() => sendWhatsAppBillWithPdf(order, settings)}
+        >
+          <MessageCircle size={16} /> WhatsApp Bill (PDF + Text)
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary flex items-center gap-1.5 text-sm"
+          onClick={() => downloadInvoicePdf(order, settings)}
+        >
+          <Download size={16} /> Download PDF
+        </button>
+        <button type="button" className="btn btn-secondary text-sm" onClick={() => window.print()}>
           <Printer size={16} /> Print Order
         </button>
-        <Link to={`/orders/${order._id}`} className="btn btn-primary">Track order</Link>
+        <Link to={`/orders/${order._id}`} className="btn btn-primary text-sm">Track order</Link>
       </div>
       <div className="print-area card-soft p-6 md:p-8">
         <h1 className="font-display text-2xl font-800 text-brand-800">

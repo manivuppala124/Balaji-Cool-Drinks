@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { MessageCircle, Download, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import { orderApi } from '../services/endpoints';
+import { useAuth } from '../context/AuthContext';
 import OrderTracker from '../components/OrderTracker';
 import { formatINR, statusTone } from '../utils/format';
+import { sendWhatsAppBillWithPdf, downloadInvoicePdf } from '../utils/whatsappBill';
 
 export default function OrderDetails() {
   const { id } = useParams();
+  const { settings } = useAuth();
   const [order, setOrder] = useState(null);
 
   useEffect(() => {
@@ -29,7 +33,25 @@ export default function OrderDetails() {
           <h1 className="font-display text-3xl font-800 text-brand-800">{order.orderNumber}</h1>
           <p className="text-muted">{new Date(order.createdAt).toLocaleString('en-IN')}</p>
         </div>
-        <span className={`badge ${statusTone(order.orderStatus)}`}>{order.orderStatus}</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="btn bg-[#25D366] text-white hover:bg-[#20bd5a] flex items-center gap-1.5 font-bold shadow-xs text-xs py-1.5 px-3"
+            onClick={() => sendWhatsAppBillWithPdf(order, settings)}
+            title="Send bill and PDF invoice via WhatsApp"
+          >
+            <MessageCircle size={15} /> WhatsApp Bill
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary flex items-center gap-1.5 text-xs py-1.5 px-3"
+            onClick={() => downloadInvoicePdf(order, settings)}
+            title="Download PDF invoice"
+          >
+            <Download size={15} /> PDF
+          </button>
+          <span className={`badge ${statusTone(order.orderStatus)}`}>{order.orderStatus}</span>
+        </div>
       </div>
 
       <div className="mt-6">
